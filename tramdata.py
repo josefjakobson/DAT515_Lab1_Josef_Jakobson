@@ -45,7 +45,12 @@ def format_textfile(file):
             fullList.append(line[1].split("\n"))
     return fullList
 
-def build_tram_network(stopdict, linedict, timedict):
+def build_tram_network(textfile, jsonfile):
+    with open(jsonfile) as f:
+        stopdict = build_tram_stops(f)
+    formattedList = format_textfile(textfile)
+    linedict = build_tram_lines(formattedList)
+    timedict = build_stop_times(formattedList)
     networkDict = {"stops":stopdict, "lines" : linedict, "times":timedict}
     with open('tramnetwork.json', 'w', encoding="utf-8") as f:
         json.dump(networkDict, f, indent=4, ensure_ascii=False)
@@ -57,27 +62,44 @@ def lines_via_stops(networkDict, stop):
     for line in networkDict["lines"]:
         if stop in networkDict["lines"][line]:
             resultlist.append(line)
-    return resultlist
+    if len(resultlist) > 0:
+        return resultlist
+    else:
+        return "Unkown arguments"
 
 def lines_between_stops(networkDict, stop1, stop2):
     resultlist = []
     for line in networkDict["lines"]:
         if stop1 in networkDict["lines"][line] and stop2 in networkDict["lines"][line]:
             resultlist.append(line)
-    return resultlist
+    if len(resultlist) > 0:
+        return resultlist
+    else:
+        return "Unkown arguments"
 
-def distance_between_stops(networkDict, stop1, stop2):
-    deltaLat = (float(networkDict["stops"][stop1]["lat:"]) - float(networkDict["stops"][stop2]["lat:"])) * math.pi/180
-    deltaLon = (float(networkDict["stops"][stop1]["lon:"]) - float(networkDict["stops"][stop2]["lon:"])) * math.pi/180
-    meanLat = (float(networkDict["stops"][stop1]["lat:"]) + float(networkDict["stops"][stop2]["lat:"]))* math.pi/180/2
-    return 6371.009*math.sqrt(deltaLat**2 + (math.cos(meanLat)*deltaLon)**2)
+def distance_between_stops(stopdict, stop1, stop2):
+    if stop1 not in stopdict or stop2 not in stopdict:
+        return "Unkown arguments"
+    deltaLat = (float(stopdict[stop1]["lat:"]) - float(stopdict[stop2]["lat:"])) * math.pi/180
+    deltaLon = (float(stopdict[stop1]["lon:"]) - float(stopdict[stop2]["lon:"])) * math.pi/180
+    meanLat = (float(stopdict[stop1]["lat:"]) + float(stopdict[stop2]["lat:"]))* math.pi/180/2
+    return round(6371.009*math.sqrt(deltaLat**2 + (math.cos(meanLat)*deltaLon)**2), 3)
 
 
 def time_between_stops(networkDict, line, stop1, stop2):
+    if line not in networkDict["lines"]:
+        return "Unkown Arguments"
     stopset = networkDict["lines"][line]
-    index1 = stopset.index(stop1)
-    index2 = stopset.index(stop2)
-    journeySet = stopset[index1:index2+1]
+    try:
+        index1 = stopset.index(stop1)
+        index2 = stopset.index(stop2)
+    except ValueError:
+        return "Unkown Arguments"
+    journeySet = []
+    if index1 < index2:
+        journeySet = stopset[index1:index2+1]
+    else:
+        journeySet = stopset[index2:index1+1]
     totalTime = 0
     for i in range(len(journeySet) - 1):
         totalTime += networkDict["times"][journeySet[i]][journeySet[i+1]]
@@ -85,7 +107,8 @@ def time_between_stops(networkDict, line, stop1, stop2):
     return totalTime
 
 def dialogue(jsonfile):
-    dict = json.load(jsonfile)
+    with open(jsonfile, encoding="utf-8") as f:
+        dict = json.load(f)
     userInput = input("> ")
     while userInput != "quit":
         print(answer_query(dict, userInput))
@@ -95,13 +118,13 @@ def answer_query(dict, userInput):
     if "via" in userInput:
         stop = " ".join(userInput.split()[1:])
         return lines_via_stops(dict, stop)
-    elif "between" in userInput:
+    elif "between" in userInput and "and" in userInput:
         userInput = userInput.split()
         andIndex = userInput.index("and")
         stop1 = " ".join(userInput[1:andIndex])
         stop2 = " ".join(userInput[andIndex+1:])
         return lines_between_stops(dict, stop1, stop2)
-    elif "time" in userInput:
+    elif "time with" in userInput:
         userInput = userInput.split()
         fromIndex = userInput.index("from")
         toIndex = userInput.index("to")
@@ -109,34 +132,22 @@ def answer_query(dict, userInput):
         stop1 = " ".join(userInput[fromIndex+1:toIndex])
         stop2 = " ".join(userInput[toIndex+1:])
         return time_between_stops(dict, line, stop1, stop2)
-    elif "distance" in userInput:
+    elif "distance from" in userInput:
         userInput = userInput.split()
         fromIndex = userInput.index("from")
         toIndex = userInput.index("to")
         stop1 = " ".join(userInput[fromIndex+1:toIndex])
         stop2 = " ".join(userInput[toIndex+1:])
-        return distance_between_stops(dict, stop1, stop2)
+        return distance_between_stops(dict["stops"], stop1, stop2)
     else:
         return "Sorry, try again"
-
-
-
-def initialize():
-    tramstopsFile = open("tramstops.json")
-    formattedList = format_textfile("tramlines.txt")
-    stops = build_tram_stops(tramstopsFile)
-    lines = build_tram_lines(formattedList)
-    times = build_stop_times(formattedList)
-    build_tram_network(stops, lines, times)
-    tramstopsFile.close()
-
 
 
 
 
 if __name__ == '__main__':
     if sys.argv[1:] == ['init']:
-        initialize()
+        build_tram_network("tramlines.txt", "tramstops.json")
     else:
-        with open("tramnetwork.json", encoding="utf-8") as f:
-            dialogue(f)			
+        build_tram_network("tramlines.txt", "tramstops.json")        
+        dialogue("tramnetwork.json")			

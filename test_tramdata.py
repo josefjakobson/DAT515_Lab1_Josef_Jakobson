@@ -10,6 +10,7 @@ class TestTramData(unittest.TestCase):
             tramdict = json.loads(trams.read())
             self.stopdict = tramdict['stops']
             self.linedict = tramdict['lines']
+            self.fulldict = tramdict
 
     def test_stops_exist(self):
         stopset = {stop for line in self.linedict for stop in self.linedict[line]}
@@ -22,7 +23,7 @@ class TestTramData(unittest.TestCase):
             text = f.read()
             p = text.split("\n\n")
             for line in p:
-                lineset.append(line.split("\n", 1)[0])
+                lineset.append(line.split("\n", 1)[0][:-1])
             
 
         for line in lineset:
@@ -39,19 +40,23 @@ class TestTramData(unittest.TestCase):
                 list.append(line[1].split("\n"))
 
         for i in range(len(list)):
-            if i % 2 == 0:
-                stopset.append([" ".join(stop[:-1]) for stop in [trimmed.split() for trimmed in list[i+1]]]) 
+            stopset.append([" ".join(stop[:-1]) for stop in [trimmed.split() for trimmed in list[i]]]) 
             
         i = 0
         for line in self.linedict:
-            self.assertIn(stopset[i], line, msg="not in linedict")
+            self.assertEqual(stopset[i], self.linedict[line], msg="not in linedict")
             i += 1
             
-
-
-
-    # add your own tests here
-
+    def test_feasible_distances(self):
+        for stop1 in self.stopdict:
+            for stop2 in self.stopdict:
+                self.assertLessEqual(distance_between_stops(self.stopdict, stop1, stop2), 20)
+            
+    def test_same_time_between_stops(self):
+        for line in self.linedict:
+            for stop1 in self.linedict[line]:
+                for stop2 in self.linedict[line]:
+                    self.assertEqual(time_between_stops(self.fulldict, line, stop1, stop2), time_between_stops(self.fulldict, line, stop2, stop1))
 
 if __name__ == '__main__':
     unittest.main()
