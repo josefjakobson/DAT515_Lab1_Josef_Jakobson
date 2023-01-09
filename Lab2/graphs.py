@@ -1,9 +1,10 @@
 import networkx as nx
 import sys
+import graphviz
 
 class Graph(nx.Graph):
     def __init__(self, start = None):
-        super.__init__(start)
+        super().__init__(start)
     
     def vertices(self):
         return self.nodes()
@@ -53,7 +54,7 @@ def dijkstra(graph, source, cost = lambda u,v: 1):
                 currentNode = node
         
         for nbr in unvisitedNodes.adj[currentNode]:
-            currentCost = cost(graph, nbr, currentNode) + path_and_cost_dict[currentNode]["cost"]
+            currentCost = cost(nbr, currentNode) + path_and_cost_dict[currentNode]["cost"]
             if currentCost < path_and_cost_dict[nbr]["cost"]:
                 path_and_cost_dict[nbr]["cost"] = currentCost
                 path_and_cost_dict[nbr]["path"] = path_and_cost_dict[currentNode]["path"] + [nbr]
@@ -61,12 +62,6 @@ def dijkstra(graph, source, cost = lambda u,v: 1):
         unvisitedNodes.remove_node(currentNode)
     
     return path_and_cost_dict
-
-    #for neighbour in graph.adj[source]:
-    #    currentCost = cost(source, neighbour)
-    #    unvisitedNodes[neighbour]["cost"] = currentCost + unvisitedNodes[source]["cost"]
-    #    unvisitedNodes[neighbour]["path"].append(neighbour)
-    #    finishedDict[neighbour] = unvisitedNodes.pop(neighbour)
 
 
 
@@ -76,5 +71,29 @@ def initialize_unvisited(graph):
         dict[vertex] = {"cost":sys.maxsize, "path" : []}
     return dict
 
+
+
+def visualize(graph : Graph, view='dot', name='mygraph', nodecolors=None):
+    visual_graph = graphviz.Graph()
+    for node in graph.vertices():
+        visual_graph.node(str(node))
+    for (v,w) in graph.edges():
+        visual_graph.edge(str(v), str(w))
+    visual_graph.render(view = True)
+
+
+def view_shortest(G, source, target, cost=lambda u,v: 1):
+    path = dijkstra(G, source, cost)[target]['path']
+    print(path)
+    colormap = {str(v): 'orange' for v in path}
+    print(colormap)
+    visualize(G, view='view', nodecolors=colormap)
+
+def demo():
+    G = Graph([(1,2),(1,3),(1,4),(3,4),(3,5),(3,6), (3,7), (6,7)])
+    view_shortest(G, 2, 6)
+
+if __name__ == '__main__':
+    demo()
 
 
