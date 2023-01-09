@@ -52,15 +52,15 @@ def dijkstra(graph, source, cost = lambda u,v: 1):
                 currentNode = node
             elif path_and_cost_dict[currentNode]["cost"] > path_and_cost_dict[node]["cost"]:
                 currentNode = node
-        
         for nbr in unvisitedNodes.adj[currentNode]:
             currentCost = cost(nbr, currentNode) + path_and_cost_dict[currentNode]["cost"]
             if currentCost < path_and_cost_dict[nbr]["cost"]:
                 path_and_cost_dict[nbr]["cost"] = currentCost
                 path_and_cost_dict[nbr]["path"] = path_and_cost_dict[currentNode]["path"] + [nbr]
-        
+
         unvisitedNodes.remove_node(currentNode)
-    
+        path_and_cost_dict[currentNode]["path"].append(source)
+
     return path_and_cost_dict
 
 
@@ -75,8 +75,9 @@ def initialize_unvisited(graph):
 
 def visualize(graph : Graph, view='dot', name='mygraph', nodecolors=None):
     visual_graph = graphviz.Graph()
+    color = lambda v : nodecolors[v] if v in nodecolors else None
     for node in graph.vertices():
-        visual_graph.node(str(node))
+        visual_graph.node(str(node), fillcolor=color(str(node)), style="filled")
     for (v,w) in graph.edges():
         visual_graph.edge(str(v), str(w))
     visual_graph.render(view = True)

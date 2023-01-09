@@ -1,4 +1,4 @@
-import tramdata
+from DAT515_Lab1_Josef_Jakobson.Lab1 import tramdata
 from graphs import WeightedGraph, view_shortest
 import json
 
@@ -10,7 +10,18 @@ class Tramnetwork(WeightedGraph):
         self._stops = stops_dict
         self._lines = lines_dict
         self._times = times_dict
-    
+        self._set_internal_graph()
+
+    def _set_internal_graph(self):
+        for line in self._lines:
+            stops = self._lines[line]
+            for i in range(len(stops)-1):
+                stop1 = stops[i]
+                stop2 = stops[i+1]
+                self.add_edge(stop1, stop2)
+                self[stop1][stop2]["weight"] = self.transition_time(stop1, stop2)
+                self[stop1][stop2]["line"] = line
+
     def stop_position(self, stop):
         return self._stops[stop]
     
