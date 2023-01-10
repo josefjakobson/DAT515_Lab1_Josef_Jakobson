@@ -26,6 +26,8 @@ class Tramnetwork(WeightedGraph):
         return self._stops[stop]
     
     def transition_time(self, stop1, stop2):
+        if stop2 not in self[stop1] and stop1 not in self[stop2]:
+            return None
         try:
             return self._times[stop1][stop2]
         except KeyError:
