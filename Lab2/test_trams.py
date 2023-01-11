@@ -1,8 +1,29 @@
+from collections import deque
 from hypothesis import given, strategies as st
-from DAT515_Lab1_Josef_Jakobson.Lab1 import tramdata
+import tramdata
 import trams
 import json
 
+
+def test_connectedness():
+    network = trams.readTramNetwork()
+    with open("tramnetwork.json", encoding="utf-8") as f:
+        dict = json.load(f)
+    traversed_graph = BSG(network, "Opaltorget")
+    for stop in dict["stops"]:
+        assert stop in traversed_graph
+
+def BSG(G : trams.WeightedGraph, node):
+    Q = deque() 
+    explored = [node]
+    Q.append(node)
+    while Q:
+        v = Q.popleft()
+        for w in G.adj[v]:
+            if w not in explored:
+                explored.append(w)
+                Q.append(w)
+    return explored
 
 def test_all_stops():
     network = trams.readTramNetwork()
@@ -41,3 +62,4 @@ if __name__ == '__main__':
     test_all_lines()
     test_stop_position()
     test_transition_time()
+    test_connectedness()

@@ -1,6 +1,7 @@
-from DAT515_Lab1_Josef_Jakobson.Lab1 import tramdata
+import tramdata
 from graphs import WeightedGraph, view_shortest
 import json
+import sys
 
 TRAM_FILE = "tramnetwork.json"
 

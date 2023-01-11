@@ -1,7 +1,7 @@
 import unittest
 from tramdata import *
 
-TRAM_FILE = './tramnetwork.json'
+TRAM_FILE = 'tramnetwork.json'
 
 class TestTramData(unittest.TestCase):
 
@@ -57,6 +57,14 @@ class TestTramData(unittest.TestCase):
             for stop1 in self.linedict[line]:
                 for stop2 in self.linedict[line]:
                     self.assertEqual(time_between_stops(self.fulldict, line, stop1, stop2), time_between_stops(self.fulldict, line, stop2, stop1))
+    
+
+    def test_dialogue(self):
+        self.assertEqual(answer_query(self.fulldict, "via Chalmers"), lines_via_stops(self.fulldict, "Chalmers"))
+        self.assertEqual(answer_query(self.fulldict, "between Chalmers and Östra Sjukhuset"), lines_between_stops(self.fulldict, "Chalmers", "Östra Sjukhuset"))
+        self.assertEqual(answer_query(self.fulldict, "time with 6 from Chalmers to Korsvägen"), time_between_stops(self.fulldict, "6", "Chalmers" ,"Korsvägen"))
+        self.assertEqual(answer_query(self.fulldict, "distance from Chalmers to Korsvägen"), distance_between_stops(self.fulldict["stops"], "Chalmers", "Korsvägen"))
+
 
 if __name__ == '__main__':
     unittest.main()
